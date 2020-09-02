@@ -58,6 +58,7 @@ func NewBoard(width, height int) *Board {
 				if j != width {
 					aGrid[i][j+1].adjacent += 1
 				}
+				//TODO: Row i+1 doesn't exist yet.......
 				//Bottom Right (row+1,col-1)
 				if i != height && j != 0 {
 					aGrid[i+1][j-1].adjacent += 1
