@@ -2,8 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
+	"strconv"
 	"time"
+
+	"github.com/gdamore/tcell"
 )
 
 type Board struct {
@@ -20,6 +25,8 @@ type Cell struct {
 	adjacent int
 }
 
+var infoLog *log.Logger
+
 func randomInt(min, max int) int {
 	return min + rand.Intn(max-min)
 }
@@ -33,7 +40,7 @@ func NewBoard(width, height int) *Board {
 		aGrid[i] = aRow
 	}
 	for i := range aGrid {
-		for j, row := range aGrid[i] {
+		for j := range aGrid[i] {
 			fmt.Printf("i: %d, j: %d.\n", i, j)
 			mined := false
 			matchee := randomInt(1, 10)
@@ -60,7 +67,6 @@ func NewBoard(width, height int) *Board {
 				if j != (width - 1) {
 					aGrid[i][j+1].adjacent += 1
 				}
-				//TODO: Row i+1 doesn't exist yet.......
 				//Bottom Right (row+1,col-1)
 				if i != (height-1) && j != 0 {
 					aGrid[i+1][j-1].adjacent += 1
@@ -75,9 +81,9 @@ func NewBoard(width, height int) *Board {
 				}
 
 			}
-			row.covered = true
-			row.flagged = false
-			row.mine = mined
+			aGrid[i][j].covered = true
+			aGrid[i][j].flagged = false
+			aGrid[i][j].mine = mined
 		}
 	}
 	aBoard := Board{
@@ -89,8 +95,77 @@ func NewBoard(width, height int) *Board {
 	return &aBoard
 }
 
+func drawBoard(s tcell.Screen, b *Board) {
+	st := tcell.StyleDefault
+	rgb := tcell.NewHexColor(int32(0x000000))
+	st = st.Background(rgb)
+	for i, row := range b.grid {
+		for j, cell := range row {
+			infoLog.Printf("Cell: %v. \n", cell)
+			//Just Draw M for mines, otherwise value of adjacent for now.
+			if cell.mine {
+				//Draw M
+				s.SetCell(i, j, st, rune('M'))
+				infoLog.Printf("Mine at %d,%d.\n", i, j)
+			} else {
+				//Draw cell.adjacent
+				ch := strconv.Itoa(cell.adjacent)
+				r := []rune(ch)
+				s.SetCell(i, j, st, r[0])
+			}
+		}
+	}
+}
+
 func main() {
-	aBoard := NewBoard(25, 25)
-	fmt.Printf("The Board: %v", aBoard)
+
+	infoLogFile, err := os.OpenFile("My.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	infoLog = log.New(infoLogFile, "INFO: ", log.Ldate|log.Ltime)
+	if err != nil {
+		log.Fatal("Error opening logfile")
+	}
+	aBoard := NewBoard(100, 100)
+	s, e := tcell.NewScreen()
+	if e != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", e)
+		os.Exit(1)
+	}
+	if e = s.Init(); e != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", e)
+		os.Exit(1)
+	}
+
+	s.SetStyle(tcell.StyleDefault.
+		Foreground(tcell.ColorBlack).
+		Background(tcell.ColorWhite))
+	s.Clear()
+
+	drawBoard(s, aBoard)
+	//fmt.Printf("The Board: %v", aBoard)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			ev := s.PollEvent()
+			switch ev := ev.(type) {
+			case *tcell.EventKey:
+				switch ev.Key() {
+				case tcell.KeyEscape, tcell.KeyEnter:
+					close(quit)
+					return
+				case tcell.KeyCtrlL:
+					s.Sync()
+				}
+			case *tcell.EventResize:
+				s.Sync()
+			}
+		}
+	}()
+loop:
+	for {
+		select {
+		case <-quit:
+			break loop
+		}
+	}
 
 }
