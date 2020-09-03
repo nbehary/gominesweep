@@ -31,7 +31,9 @@ func NewBoard(width, height int) *Board {
 	for i := range aGrid {
 		aRow := make([]Cell, width)
 		aGrid[i] = aRow
-		for j, row := range aRow {
+	}
+	for i := range aGrid {
+		for j, row := range aGrid[i] {
 			fmt.Printf("i: %d, j: %d.\n", i, j)
 			mined := false
 			matchee := randomInt(1, 10)
@@ -47,7 +49,7 @@ func NewBoard(width, height int) *Board {
 					aGrid[i-1][j].adjacent += 1
 				}
 				//Top Left (row-1,col+1)
-				if i != 0 && j != width {
+				if i != 0 && j != (width-1) {
 					aGrid[i-1][j+1].adjacent += 1
 				}
 				//Left (row,col-1)
@@ -55,20 +57,20 @@ func NewBoard(width, height int) *Board {
 					aGrid[i][j-1].adjacent += 1
 				}
 				//Right (row,col+1)
-				if j != width {
+				if j != (width - 1) {
 					aGrid[i][j+1].adjacent += 1
 				}
 				//TODO: Row i+1 doesn't exist yet.......
 				//Bottom Right (row+1,col-1)
-				if i != height && j != 0 {
+				if i != (height-1) && j != 0 {
 					aGrid[i+1][j-1].adjacent += 1
 				}
 				//Below (row+1,co1)
-				if i != height {
+				if i != (height - 1) {
 					aGrid[i+1][j].adjacent += 1
 				}
 				//Bottom Left (row+1,col+1)
-				if i != height && j != width {
+				if i != (height-1) && j != (width-1) {
 					aGrid[i+1][j+1].adjacent += 1
 				}
 
