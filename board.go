@@ -96,35 +96,45 @@ func NewBoard(width, height int) *Board {
 }
 
 func drawBoard(s tcell.Screen, b *Board) {
-	st := tcell.StyleDefault
-	rgb := tcell.NewHexColor(int32(0x000000))
-	st = st.Background(rgb)
 	for i, row := range b.grid {
 		for j, cell := range row {
 			infoLog.Printf("Cell: %v. \n", cell)
 			//Just Draw M for mines, otherwise value of adjacent for now.
 			if cell.mine {
 				//Draw M
-				s.SetCell(i, j, st, rune('M'))
+				drawCell(s, i, j, rune('M'))
 				infoLog.Printf("Mine at %d,%d.\n", i, j)
 			} else {
 				//Draw cell.adjacent
 				ch := strconv.Itoa(cell.adjacent)
 				r := []rune(ch)
-				s.SetCell(i, j, st, r[0])
+				drawCell(s, i, j, r[0])
 			}
 		}
 	}
 }
 
-func main() {
+func drawCell(s tcell.Screen, x, y int, ch rune) {
+	st := tcell.StyleDefault
+	rgb := tcell.NewHexColor(int32(0xb0afac))
+	st = st.Background(rgb)
+	size := 3
+	drawBox(s, x*size, y*size, (x*size)+(size-1), (y*size)+(size-1), st, ch)
+}
 
-	infoLogFile, err := os.OpenFile("My.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func whichCell(x, y int) (int, int) {
+	outX := int(x / 3)
+	outY := int(y / 3)
+	return outX, outY
+}
+
+func main() {
+	infoLogFile, err := os.OpenFile("info.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	infoLog = log.New(infoLogFile, "INFO: ", log.Ldate|log.Ltime)
 	if err != nil {
 		log.Fatal("Error opening logfile")
 	}
-	aBoard := NewBoard(100, 100)
+	aBoard := NewBoard(15, 50)
 	s, e := tcell.NewScreen()
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
@@ -138,10 +148,10 @@ func main() {
 	s.SetStyle(tcell.StyleDefault.
 		Foreground(tcell.ColorBlack).
 		Background(tcell.ColorWhite))
+	s.EnableMouse()
 	s.Clear()
 
 	drawBoard(s, aBoard)
-	//fmt.Printf("The Board: %v", aBoard)
 	quit := make(chan struct{})
 	go func() {
 		for {
@@ -157,6 +167,19 @@ func main() {
 				}
 			case *tcell.EventResize:
 				s.Sync()
+			case *tcell.EventMouse:
+				x, y := ev.Position()
+				//button := ev.Buttons()
+				switch ev.Buttons() {
+				case tcell.Button1:
+					x2, y2 := whichCell(x, y)
+					infoLog.Printf("Button 1. x:%d, y:%d. Cell x:%d,y%d", x, y, x2, y2)
+				case tcell.Button2:
+					infoLog.Println("Button 2")
+				case tcell.Button3:
+					infoLog.Println("Button 3")
+				default:
+				}
 			}
 		}
 	}()
@@ -167,5 +190,7 @@ loop:
 			break loop
 		}
 	}
+	s.Fini()
+	os.Exit(0)
 
 }
