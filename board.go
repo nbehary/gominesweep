@@ -15,14 +15,7 @@ type Board struct {
 	height int
 	width  int
 
-	grid [][]Cell
-}
-
-type Cell struct {
-	mine     bool
-	covered  bool
-	flagged  bool
-	adjacent int
+	grid [][]*Cell
 }
 
 var infoLog *log.Logger
@@ -39,6 +32,7 @@ func NewBoard(width, height int) *Board {
 		aRow := make([]Cell, width)
 		aGrid[i] = aRow
 	}
+	number := 0
 	for i := range aGrid {
 		for j := range aGrid[i] {
 			fmt.Printf("i: %d, j: %d.\n", i, j)
@@ -84,6 +78,10 @@ func NewBoard(width, height int) *Board {
 			aGrid[i][j].covered = true
 			aGrid[i][j].flagged = false
 			aGrid[i][j].mine = mined
+			aGrid[i][j].x = i
+			aGrid[i][j].y = i
+			aGrid[i][j].number = number
+			number += 1
 		}
 	}
 	aBoard := Board{
