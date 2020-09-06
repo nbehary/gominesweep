@@ -134,7 +134,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error opening logfile")
 	}
-	aBoard := NewBoard(15, 50)
+	aBoard := NewBoard(10, 50)
 	s, e := tcell.NewScreen()
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
